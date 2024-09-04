@@ -133,6 +133,7 @@ def read_sensor_data(dxl_id, portHandler, packetHandler):
 		time.sleep(5)
 		# calculate address shift
 		addr = DX_SENSORS_DATA_FIRST + (i * 4)
+		print(f"SNS_DATA_REG - {addr}")
 		vals_sns, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, dxl_id, addr)
 		if dxl_comm_result != COMM_SUCCESS:
 			print(f"Communication error: {packetHandler.getTxRxResult(dxl_comm_result)}")

@@ -10,6 +10,12 @@ __pycache__/
 *.DS_Store
 *.nova/Configuration.json
 
+# Sample for understanding
+test_dict.py
+
+# Results of script
+*.txt
+
 # Distribution / packaging
 .Python
 build/
