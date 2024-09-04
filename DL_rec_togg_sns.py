@@ -93,33 +93,47 @@ def verify_data_written(filename):
 	
 	with open(filename, 'r') as file:
 		return file.readlines()[-1].strip() == "END OF DATA"
-
-def toggle_sns(dxl_id, portHandler, packetHandler, sns_port):
-	"""Initialize and toggle the sensor, then read its data."""
-	print(f"Initializing and toggling sensor.")
-	
-	time.sleep(60)
-	
-	dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler, dxl_id, sns_port + 4, 3)
-	if dxl_comm_result != COMM_SUCCESS:
-		print(f"Error initializing sensor: {dxl_error}")
-		return None
-
-	dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler, dxl_id, DX_MEAS_START_STOP, 1)
-	if dxl_comm_result != COMM_SUCCESS:
-		print(f"Error starting measurement: {dxl_error}")
-		return None
-
-	vals_sns, dxl_comm_result, dxl_error = readTxRx(portHandler, dxl_id, DX_SENSORS_DATA_FIRST, 8)
+		
+def read_sensor_data(portHandler, dxl_id, packetHandler):
+	vals_sns, dxl_comm_result, dxl_error = readTxRx(portHandler, dxl_id, DX_SENSORS_DATA_FIRST, 40)
 	if dxl_comm_result != COMM_SUCCESS:
 		print(f"Communication error: {packetHandler.getTxRxResult(dxl_comm_result)}")
 		return None
 	elif dxl_error != 0:
 		print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
 		return None
-
+	
 	list_of_data = [(vals_sns[i], vals_sns[i + 1]) for i in range(0, len(vals_sns), 2)]
 	return list_of_data
+	
+def pause_script(message="Pausing script. Press Enter to continue..."):
+		print(message)
+		input()
+		
+		
+def toggle_sns(dxl_id, portHandler, packetHandler, sns_port):
+	"""Initialize and toggle the sensor, then read its data."""
+	print(f"Initializing and toggling sensor.")
+	
+	dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler, dxl_id, sns_port + 4, 3)
+	if dxl_comm_result != COMM_SUCCESS:
+		print(f"Error initializing sensor: {dxl_error}")
+		return None
+		
+	print("Get Hot sensor...")
+	# Sensor initialization code here
+	
+	time.sleep(60)
+	
+	pause_script("Sensor hot. Please touch the sensor and press Enter to continue...")
+	
+	print("Resuming data collection from the sensor...")
+	# Continue with sensor data collection or other tasks
+	
+	dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, dxl_id, DX_MEAS_START_STOP, 1)
+	if dxl_comm_result != COMM_SUCCESS:
+		print(f"Error starting measurement: {dxl_error}")
+		return None
 
 def deinit_mes_sns(dxl_id, portHandler, packetHandler):
 	"""Deinitialize the sensor."""
