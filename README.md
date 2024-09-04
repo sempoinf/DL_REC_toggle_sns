@@ -46,10 +46,10 @@ Before running the script, you need to adjust the following constants in the scr
 
 ## Usage
 
-Run the script from the command line:
+    Run the script from the command line:
 
-   ```sh
-    python sns_talk_chat.py
+   ```sh 
+   python sns_talk_chat.py
    ```
 
 The script will:
@@ -63,14 +63,14 @@ The script will:
 ## Example Output
 
    ```sh
-    Trying port: /dev/cu.usbserial-1140
-    Device found!
-    Checking where sensor 46 is connected.
-    Sensor 46 found on Port1.
-    Initializing and toggling sensor 46.
-    Sensor Data Pairs: [(2500, 3000), (2600, 3100), ...]
-    Data written to results_term_compens.txt
-    Data successfully written to file. Measurements can continue.
+   Trying port: /dev/cu.usbserial-1140
+   Device found!
+   Checking where sensor 46 is connected.
+   Sensor 46 found on Port1.
+   Initializing and toggling sensor 46.
+   Sensor Data Pairs: [(2500, 3000), (2600, 3100), ...]
+   Data written to results_term_compens.txt
+   Data successfully written to file. Measurements can continue.
    ```
 
 ## Error Handling
