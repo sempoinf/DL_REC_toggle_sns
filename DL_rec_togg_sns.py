@@ -26,6 +26,7 @@ DX_SENSORS_STATUS = 83
 DX_SENSORS_DATA_FIRST = 85
 DX_SENSOR_DATA_LAST = 124
 DX_UPD_COMMAND = 125
+
 SNS_ETHANOL_ID = 46
 
 def connect_dev(dxl_id, baudrate):
@@ -59,20 +60,28 @@ def find_port_sns(dxl_id, portHandler, packetHandler, sns_id_desired):
 	"""Find the port where the sensor with the desired ID is connected."""
 	print(f"Checking where sensor {sns_id_desired} is connected.")
 	
+	# Iterate through each port register to find the sensor
 	for reg_address, port_name in PORT_REGISTERS.items():
-		port_reg, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, dxl_id, reg_address)
+		# Attempt to read the sensor ID from the current register
+		sns_id_curr, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, dxl_id, reg_address)
 		
+		# Check for communication errors
 		if dxl_comm_result != COMM_SUCCESS:
-			print(f"Communication error on register {reg_address}: {dxl_error}")
-			print(f"Get port was {port_reg}!")
-			continue
+			comm_error_msg = packetHandler.getTxRxResult(dxl_comm_result)
+			print(f"Communication error {port_name} ({hex(reg_address)}): {comm_error_msg} (Error Code: {dxl_comm_result})")
+			continue  # Skip to the next register if there's a communication error
+		elif dxl_error != 0:
+			device_error_msg = packetHandler.getRxPacketError(dxl_error)
+			print(f"Device error on register {reg_address} ({port_name}): {device_error_msg} (Error Code: {dxl_error})")
+		else:
+			print(f"Successfully read from {port_name}: Sensor ID {sns_id_curr}")		
 		
-		sns_id_curr = port_reg  # Assuming port_reg contains the sensor ID
-		
+		# Check if the current sensor ID matches the desired sensor ID
 		if sns_id_curr == sns_id_desired:
 			print(f"Sensor {sns_id_desired} found on {port_name}.")
-			return reg_address
+			return reg_address  # Return the register address if the sensor is found
 	
+	# If no matching sensor is found after checking all ports
 	print(f"Sensor {sns_id_desired} not found on any port.")
 	return None
 
@@ -95,8 +104,8 @@ def verify_data_written(filename):
 	with open(filename, 'r') as file:
 		return file.readlines()[-1].strip() == "END OF DATA"
 		
-def read_sensor_data(portHandler, dxl_id, packetHandler):
-	vals_sns, dxl_comm_result, dxl_error = readTxRx(portHandler, dxl_id, DX_SENSORS_DATA_FIRST, 40)
+def read_sensor_data(dxl_id, portHandler, packetHandler):
+	vals_sns, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, dxl_id, DX_SENSORS_DATA_FIRST)
 	if dxl_comm_result != COMM_SUCCESS:
 		print(f"Communication error: {packetHandler.getTxRxResult(dxl_comm_result)}")
 		return None
@@ -108,15 +117,14 @@ def read_sensor_data(portHandler, dxl_id, packetHandler):
 	return list_of_data
 	
 def pause_script(message="Pausing script. Press Enter to continue..."):
-		print(message)
-		input()
-		
-		
+		#print(message)
+		input("Pausing script. Press Enter to continue...")
+			
 def toggle_sns(dxl_id, portHandler, packetHandler, sns_port):
 	"""Initialize and toggle the sensor, then read its data."""
 	print(f"Initializing and toggling sensor.")
 	
-	dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler, dxl_id, sns_port + 4, 3)
+	dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler, dxl_id, (sns_port + 4), 3)
 	if dxl_comm_result != COMM_SUCCESS:
 		print(f"Error initializing sensor: {dxl_error}")
 		return None
@@ -124,17 +132,19 @@ def toggle_sns(dxl_id, portHandler, packetHandler, sns_port):
 	print("Get Hot sensor...")
 	# Sensor initialization code here
 	
-	time.sleep(60)
+	time.sleep(10)
 	
 	pause_script("Sensor hot. Please touch the sensor and press Enter to continue...")
 	
-	print("Resuming data collection from the sensor...")
-	# Continue with sensor data collection or other tasks
+	print("Resuming data collection from the sensor...\n")
 	
+	# Continue with sensor data collection or other tasks
 	dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, dxl_id, DX_MEAS_START_STOP, 1)
 	if dxl_comm_result != COMM_SUCCESS:
 		print(f"Error starting measurement: {dxl_error}")
 		return None
+	else:
+		print(f"Start Meas {sns_port}")
 
 def deinit_mes_sns(dxl_id, portHandler, packetHandler):
 	"""Deinitialize the sensor."""
@@ -153,7 +163,8 @@ def main():
 	if portHandler and packetHandler:
 		sns_port = find_port_sns(DXL_ID, portHandler, packetHandler, SNS_ETHANOL_ID)
 		if sns_port:
-			sensor_data_pairs = toggle_sns(DXL_ID, portHandler, packetHandler, sns_port)
+			toggle_sns(DXL_ID, portHandler, packetHandler, sns_port)
+			sensor_data_pairs = read_sensor_data(DXL_ID, portHandler, packetHandler)
 			if sensor_data_pairs:
 				print("Sensor Data Pairs:", sensor_data_pairs)
 				
@@ -174,6 +185,12 @@ def main():
 
 if __name__ == '__main__':
 	try:
-		main()
+		for i in range(3):
+			main()
+			alpha = input("If a mistake occurred, enter 'e' to exit, or press Enter to continue: ").strip().lower()
+			if alpha == "e":
+				print("Exiting due to user input.")
+				sys.exit(0)
 	except KeyboardInterrupt:
-		print("\nExiting...")
+		print("\nScript interrupted by user.")
+		sys.exit(0)
