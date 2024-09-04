@@ -129,24 +129,27 @@ def toggle_sns(dxl_id, portHandler, packetHandler, sns_port):
 		print(f"Start measuaring data from sensor")
 	
 def read_sensor_data(dxl_id, portHandler, packetHandler):
-	time.sleep(9)
-	vals_sns, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, dxl_id, DX_SENSORS_DATA_FIRST)
-	if dxl_comm_result != COMM_SUCCESS:
-		print(f"Communication error: {packetHandler.getTxRxResult(dxl_comm_result)}")
-		return None
-	elif dxl_error != 0:
-		print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
-		return None
-	else:
-		# print(f"Data from reg: {vals_sns}")
-		f_num = vals_sns & 0xFFFF
-		s_num = (vals_sns >> 16) & 0xFFFF
-		list_of_data = [f_num, s_num]
-		#list_of_data = [(vals_sns[i], vals_sns[i + 1]) for i in range(0, len(vals_sns), 2)]
-		print(f"Data: {hex(vals_sns)}")
-		print(f"Two 2-byte numbers: {list_of_data}")
-		input("After read data from regs")
-		return list_of_data
+	for i in range(3):
+		time.sleep(5)
+		# calculate address shift
+		addr = DX_SENSORS_DATA_FIRST + (i * 4)
+		vals_sns, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, dxl_id, addr)
+		if dxl_comm_result != COMM_SUCCESS:
+			print(f"Communication error: {packetHandler.getTxRxResult(dxl_comm_result)}")
+			return None
+		elif dxl_error != 0:
+			print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+			return None
+		else:
+			# print(f"Data from reg: {vals_sns}")
+			f_num = vals_sns & 0xFFFF
+			s_num = (vals_sns >> 16) & 0xFFFF
+			list_of_data = [f_num, s_num]
+			#list_of_data = [(vals_sns[i], vals_sns[i + 1]) for i in range(0, len(vals_sns), 2)]
+			print(f"Data: {hex(vals_sns)}")
+			print(f"Two 2-byte numbers: {list_of_data}")
+			input("After read data from regs")
+			# return list_of_data
 
 def write_data_to_file(filename, data):
 	"""Write sensor data to a file with pairs and a control string."""
