@@ -46,7 +46,7 @@ Before running the script, you need to adjust the following constants in the scr
 
 ## Usage
 
-    Run the script from the command line:
+Run the script from the command line:
 
    ```sh 
    python sns_talk_chat.py
