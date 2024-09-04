@@ -1,0 +1,6 @@
+cffi==1.16.0
+dynamixel-sdk==3.7.31
+future==1.0.0
+pycparser==2.22
+pyserial==3.5
+serial==0.0.97

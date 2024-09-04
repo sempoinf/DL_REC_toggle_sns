@@ -39,7 +39,7 @@ def connect_dev(dxl_id, baudrate):
 			portHandler.setBaudRate(baudrate)
 			portHandler.openPort()
 
-			dxl_comm_result, dxl_error = packetHandler.ping(portHandler, dxl_id)
+			outping_data, dxl_comm_result, dxl_error = packetHandler.ping(portHandler, dxl_id)
 			if dxl_comm_result == COMM_SUCCESS:
 				print("Device found!")
 				return portHandler, packetHandler
@@ -64,6 +64,7 @@ def find_port_sns(dxl_id, portHandler, packetHandler, sns_id_desired):
 		
 		if dxl_comm_result != COMM_SUCCESS:
 			print(f"Communication error on register {reg_address}: {dxl_error}")
+			print(f"Get port was {port_reg}!")
 			continue
 		
 		sns_id_curr = port_reg  # Assuming port_reg contains the sensor ID
@@ -84,7 +85,7 @@ def write_data_to_file(filename, data):
 			file.write("=================\n\n")
 		
 		file.writelines(f"Pair {index+1}: {pair[0]:>6}, {pair[1]:>6}\n" for index, pair in enumerate(data))
-			file.write("\nEND OF DATA\n")
+		file.write("\nEND OF DATA\n")
 
 def verify_data_written(filename):
 	"""Verify if the data was written correctly by checking the control string."""
